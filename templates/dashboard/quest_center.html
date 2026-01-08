@@ -1,0 +1,90 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>콘텐츠 &amp; 퀘스트 관리 (Quest Center)</h2>
+    <p>회상 요법 콘텐츠와 일일 미션을 디자인합니다.</p>
+  </div>
+  <button class="primary">새 콘텐츠 등록</button>
+</section>
+
+<section class="grid two">
+  <article class="card" data-animate>
+    <div class="card-header">
+      <h3>회상 요법 라이브러리</h3>
+      <span class="chip">이미지</span>
+    </div>
+    <div class="library">
+      {% for item in therapy_library %}
+      <div class="library-item">
+        <div class="library-thumb">{{ item.tag }}</div>
+        <div>
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.meta }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <form class="upload-form">
+      <label>
+        <span>사진 업로드</span>
+        <input type="file" disabled>
+      </label>
+      <button class="ghost" type="button">업로드 대기</button>
+    </form>
+  </article>
+
+  <article class="card" data-animate>
+    <div class="card-header">
+      <h3>퀘스트 생성기</h3>
+      <span class="chip">미션 배포</span>
+    </div>
+    <form class="quest-form">
+      <label>
+        <span>퀘스트 제목</span>
+        <input type="text" value="거실 5분 걷기">
+      </label>
+      <label>
+        <span>퀘스트 설명</span>
+        <textarea rows="3">집 안을 천천히 걸으며 안전 센서가 잘 작동하는지 확인합니다.</textarea>
+      </label>
+      <label>
+        <span>추천 지역</span>
+        <select>
+          <option>노송동</option>
+          <option>완산동</option>
+          <option>덕진동</option>
+        </select>
+      </label>
+      <button class="primary" type="button">오늘의 미션 배포</button>
+    </form>
+    <div class="suggestions">
+      <p>추천 퀘스트</p>
+      <ul>
+        {% for quest in quest_suggestions %}
+        <li>{{ quest }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </article>
+</section>
+
+<section class="card" data-animate>
+  <div class="card-header">
+    <h3>성취 배지 관리</h3>
+    <span class="chip">디지털 배지</span>
+  </div>
+  <div class="badge-grid">
+    {% for badge in badges %}
+    <div class="badge">
+      <span>{{ badge.icon }}</span>
+      <div>
+        <strong>{{ badge.title }}</strong>
+        <p>{{ badge.criteria }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

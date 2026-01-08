@@ -1,0 +1,53 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>이상 징후 리포트 (Alert History)</h2>
+    <p>발생 로그를 확인하고 오보 여부를 검증합니다.</p>
+  </div>
+  <button class="ghost">필터 설정</button>
+</section>
+
+<section class="card" data-animate>
+  <div class="card-header">
+    <h3>알림 로그</h3>
+    <span class="chip">최근 24시간</span>
+  </div>
+  <div class="table">
+    <div class="table-row header">
+      <span>시간</span>
+      <span>이상 내용</span>
+      <span>위치</span>
+      <span>조치 여부</span>
+      <span>데이터 검증</span>
+    </div>
+    {% for alert in alerts %}
+    <div class="table-row">
+      <span>{{ alert.time }}</span>
+      <span><strong>{{ alert.type }}</strong><br>{{ alert.detail }}</span>
+      <span>{{ alert.area }}</span>
+      <span>
+        <label class="checkbox">
+          <input type="checkbox" {% if alert.handled %}checked{% endif %}>
+          <span>{{ alert.status_label }}</span>
+        </label>
+      </span>
+      <span>
+        <div class="skeleton-card">
+          <canvas id="skeleton-{{ alert.id }}" width="120" height="80"></canvas>
+          <small>{{ alert.validation_note }}</small>
+        </div>
+        {{ alert.skeleton_points|json_script:alert.skeleton_script_id }}
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
+
+{% block script_extra %}
+<script>
+  window.renderSkeletons();
+</script>
+{% endblock %}

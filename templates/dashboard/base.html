@@ -1,0 +1,106 @@
+{% load static %}
+
+<!DOCTYPE html>
+
+<html lang="ko">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>{{ title }} | SmartHome Guard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="{% static 'dashboard/styles.css' %}">
+
+  {% block head_extra %}{% endblock %}
+
+</head>
+
+<body class="page-{{ page_name }}">
+
+  <div class="ambient"></div>
+
+  <header class="topbar">
+
+    <div class="brand">
+
+      <span class="brand-mark">SH</span>
+
+      <div>
+
+        <h1>SmartHome Guard</h1>
+
+        <p>전주 어르신 통합 관제 대시보드</p>
+
+      </div>
+
+    </div>
+
+    <div class="topbar-actions">
+
+      <button class="ghost">긴급 방송</button>
+
+      <button class="primary">새로운 리포트</button>
+
+    </div>
+
+  </header>
+
+  <div class="layout">
+
+    <aside class="sidebar">
+
+      <nav>
+
+        <a href="{% url 'dashboard' %}" class="{% if page_name == 'dashboard' %}active{% endif %}">통합 관제</a>
+
+        <a href="{% url 'elderly_list' %}" class="{% if page_name == 'elderly' %}active{% endif %}">대상자 관리</a>
+
+        <a href="{% url 'device_register' %}" class="{% if page_name == 'device_register' %}active{% endif %}">대상자 등록</a>
+
+
+        <a href="{% url 'alert_history' %}" class="{% if page_name == 'alerts' %}active{% endif %}">이상 징후 리포트</a>
+
+        <a href="{% url 'quest_center' %}" class="{% if page_name == 'quests' %}active{% endif %}">콘텐츠 &amp; 퀘스트</a>
+
+        <a href="{% url 'environment_guide' %}" class="{% if page_name == 'environment' %}active{% endif %}">환경 가이드</a>
+
+      </nav>
+
+      <div class="sidebar-footer">
+
+        <div class="status-chip">시스템 정상</div>
+
+        <p>실시간 센서 연결: 128 가구</p>
+
+      </div>
+
+    </aside>
+
+    <main>
+
+      {% block content %}{% endblock %}
+
+    </main>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <script src="{% static 'dashboard/app.js' %}"></script>
+
+  {% block script_extra %}{% endblock %}
+
+</body>
+
+</html>
+
+

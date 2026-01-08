@@ -1,0 +1,105 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+  <section class="page-header">
+    <div>
+      <h2>대상자 등록</h2>
+      <p>기본 정보와 장치 시리얼을 등록하면 라즈베리파이가 자동으로 연결됩니다.</p>
+    </div>
+  </section>
+
+  <div class="grid two">
+    <section class="card">
+      <div class="card-header">
+        <h3>등록 폼</h3>
+        <span class="chip">Owner + Device</span>
+      </div>
+
+      {% if error %}
+        <div class="chip danger">{{ error }}</div>
+      {% endif %}
+
+      {% if success %}
+        <div class="chip safe">등록 완료</div>
+        <p>개인 번호: <strong>{{ success.user_id }}</strong></p>
+        <p>시리얼: <strong>{{ success.serial }}</strong></p>
+        <p>대상자 ID: <strong>{{ success.elderly_id }}</strong></p>
+      {% endif %}
+
+      <form method="post" class="quest-form">
+        {% csrf_token %}
+        <label>
+          이름
+          <input type="text" name="name" value="{{ form.name|default:'' }}" required>
+        </label>
+        <label>
+          나이
+          <input type="number" name="age" min="0" value="{{ form.age|default:'' }}" placeholder="예: 82">
+        </label>
+        <label>
+          병명/특이사항
+          <input type="text" name="conditions" value="{{ form.conditions|default:'' }}" placeholder="예: 관절염, 치매">
+        </label>
+        <label>
+          주소
+          <input type="text" name="address" value="{{ form.address|default:'' }}" placeholder="예: 전주시 덕진동 402-1">
+        </label>
+        <label>
+          비상 연락처
+          <input type="text" name="emergency_contact" value="{{ form.emergency_contact|default:'' }}" placeholder="예: 보호자 010-1234-5678">
+        </label>
+        <label>
+          장치 시리얼 번호
+          <input type="text" name="serial" value="{{ form.serial|default:'' }}" required placeholder="예: RPI4-001">
+        </label>
+        <button type="submit" class="primary">추가하기</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h3>연동 안내</h3>
+        <span class="chip">Raspberry Pi</span>
+      </div>
+      <p>라즈베리파이 실행 시 시리얼을 보내면 서버가 토큰을 발급합니다.</p>
+      <pre><code>export API_BASE="http://&lt;SERVER_IP&gt;:8000/api"
+export DEVICE_SERIAL="RPI4-001"
+python rpi/vision_client.py</code></pre>
+      <p>서버에 등록된 시리얼이 아니면 자동으로 대기합니다.</p>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-header">
+      <h3>등록된 대상자</h3>
+      <span class="chip">관리</span>
+    </div>
+
+    {% if devices %}
+      <div class="table">
+        <div class="table-row header device-row">
+          <span>이름</span>
+          <span>나이</span>
+          <span>병명</span>
+          <span>시리얼</span>
+          <span>연락처</span>
+          <span>관리</span>
+          <span>모니터</span>
+        </div>
+        {% for device in devices %}
+          <div class="table-row device-row">
+            <span>{{ device.owner.name }}</span>
+            <span>{{ device.owner.age|default:"-" }}</span>
+            <span>{{ device.owner.conditions|default:"-" }}</span>
+            <span>{{ device.serial }}</span>
+            <span>{{ device.elderly.emergency_contact|default:"-" }}</span>
+            <span><a class="chip" href="{% url 'device_edit' device.id %}">수정</a></span>
+            <span><a class="chip" href="{% url 'device_vision' device.id %}">보기</a></span>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>등록된 대상자가 없습니다.</p>
+    {% endif %}
+  </section>
+{% endblock %}

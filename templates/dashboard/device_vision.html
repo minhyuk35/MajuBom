@@ -1,0 +1,60 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+  <section class="page-header">
+    <div>
+      <h2>Live Vision</h2>
+      <p>Device {{ device.serial }} live feed.</p>
+    </div>
+  </section>
+
+  <div class="grid two">
+    <section class="card">
+      <div class="card-header">
+        <h3>Camera</h3>
+        <span class="chip">Vision</span>
+      </div>
+      <div class="vision-frame">
+        <img id="vision-frame" alt="vision-frame" />
+        <div class="vision-placeholder" id="vision-placeholder">Waiting for frames...</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h3>Device</h3>
+        <span class="chip">Status</span>
+      </div>
+      <p>Owner: <strong>{{ device.owner.name }}</strong></p>
+      <p>Device ID: <strong>{{ device.id }}</strong></p>
+      <p>Serial: <strong>{{ device.serial }}</strong></p>
+    </section>
+  </div>
+{% endblock %}
+
+{% block script_extra %}
+  <script>
+    const deviceId = "{{ device.id }}";
+    const wsProtocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const wsBase = "{{ ws_base|default:'' }}".trim();
+    const wsHost = wsBase ? wsBase.replace(/\/+$/, "") : `${wsProtocol}://${window.location.host}`;
+    const wsUrl = `${wsHost}/ws/vision/${deviceId}/`;
+    const img = document.getElementById("vision-frame");
+    const placeholder = document.getElementById("vision-placeholder");
+
+    const socket = new WebSocket(wsUrl);
+
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (!data.frame) {
+        return;
+      }
+      img.src = `data:image/jpeg;base64,${data.frame}`;
+      placeholder.style.display = "none";
+    };
+
+    socket.onclose = () => {
+      placeholder.style.display = "flex";
+    };
+  </script>
+{% endblock %}

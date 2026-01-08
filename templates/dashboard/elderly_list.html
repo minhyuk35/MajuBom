@@ -1,0 +1,67 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>대상자 관리 (Elderly List)</h2>
+    <p>개인 프로필과 베이스라인, 활동 패턴을 관리합니다.</p>
+  </div>
+  <button class="primary">신규 대상자 등록</button>
+</section>
+
+<section class="grid two">
+  {% for elder in elderly_profiles %}
+  <article class="card profile-card" data-animate>
+    <div class="profile-header">
+      <div class="avatar">
+        <span>{{ elder.initials }}</span>
+      </div>
+      <div>
+        <h3>{{ elder.name }}</h3>
+        <p>{{ elder.age }}세 · {{ elder.area }}</p>
+      </div>
+      <div class="status-pill {{ elder.risk_class }}">{{ elder.risk_label }}</div>
+    </div>
+    <div class="profile-grid">
+      <div>
+        <h4>개인 프로필</h4>
+        <p>주소: {{ elder.address }}</p>
+        <p>비상 연락처: {{ elder.emergency_contact }}</p>
+        <p>기저 질환: {{ elder.conditions }}</p>
+      </div>
+      <div>
+        <h4>베이스라인 상태</h4>
+        <p>학습 {{ elder.baseline_progress.current }}일 차 / {{ elder.baseline_progress.total }}일</p>
+        <div class="progress">
+          <div style="width: {{ elder.baseline_progress.percent }}%"></div>
+        </div>
+        <ul class="metric-list">
+          {% for metric in elder.baseline_metrics %}
+          <li>{{ metric.label }} <strong>{{ metric.value }}</strong></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <div class="timeline">
+      <div>
+        <h4>활동 타임라인 (24h)</h4>
+        <canvas id="activity-{{ elder.id }}" height="110"></canvas>
+      </div>
+      <div class="sleep-box">
+        <h4>수면 패턴 분석</h4>
+        <p>총 수면: {{ elder.sleep.total }}시간</p>
+        <p>깊은 수면: {{ elder.sleep.deep }}시간</p>
+        <p>뒤척임: {{ elder.sleep.disruptions }}회</p>
+      </div>
+    </div>
+    {{ elder.activity|json_script:elder.activity_script_id }}
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}
+
+{% block script_extra %}
+<script>
+  window.renderActivityCharts();
+</script>
+{% endblock %}
