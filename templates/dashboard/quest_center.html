@@ -1,90 +1,133 @@
-{% extends 'dashboard/base.html' %}
-
-{% block content %}
-<section class="page-header">
-  <div>
-    <h2>콘텐츠 &amp; 퀘스트 관리 (Quest Center)</h2>
-    <p>회상 요법 콘텐츠와 일일 미션을 디자인합니다.</p>
-  </div>
-  <button class="primary">새 콘텐츠 등록</button>
-</section>
-
-<section class="grid two">
-  <article class="card" data-animate>
-    <div class="card-header">
-      <h3>회상 요법 라이브러리</h3>
-      <span class="chip">이미지</span>
-    </div>
-    <div class="library">
-      {% for item in therapy_library %}
-      <div class="library-item">
-        <div class="library-thumb">{{ item.tag }}</div>
-        <div>
-          <strong>{{ item.title }}</strong>
-          <p>{{ item.meta }}</p>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-    <form class="upload-form">
-      <label>
-        <span>사진 업로드</span>
-        <input type="file" disabled>
-      </label>
-      <button class="ghost" type="button">업로드 대기</button>
-    </form>
-  </article>
-
-  <article class="card" data-animate>
-    <div class="card-header">
-      <h3>퀘스트 생성기</h3>
-      <span class="chip">미션 배포</span>
-    </div>
-    <form class="quest-form">
-      <label>
-        <span>퀘스트 제목</span>
-        <input type="text" value="거실 5분 걷기">
-      </label>
-      <label>
-        <span>퀘스트 설명</span>
-        <textarea rows="3">집 안을 천천히 걸으며 안전 센서가 잘 작동하는지 확인합니다.</textarea>
-      </label>
-      <label>
-        <span>추천 지역</span>
-        <select>
-          <option>노송동</option>
-          <option>완산동</option>
-          <option>덕진동</option>
-        </select>
-      </label>
-      <button class="primary" type="button">오늘의 미션 배포</button>
-    </form>
-    <div class="suggestions">
-      <p>추천 퀘스트</p>
-      <ul>
-        {% for quest in quest_suggestions %}
-        <li>{{ quest }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-  </article>
-</section>
-
-<section class="card" data-animate>
-  <div class="card-header">
-    <h3>성취 배지 관리</h3>
-    <span class="chip">디지털 배지</span>
-  </div>
-  <div class="badge-grid">
-    {% for badge in badges %}
-    <div class="badge">
-      <span>{{ badge.icon }}</span>
-      <div>
-        <strong>{{ badge.title }}</strong>
-        <p>{{ badge.criteria }}</p>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-</section>
-{% endblock %}
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>콘텐츠 &amp; 퀘스트 관리 (Quest Center)</h2>
+    <p>회상 요법 콘텐츠와 일일 미션을 디자인합니다.</p>
+  </div>
+  <button class="primary" type="button">새 콘텐츠 등록</button>
+</section>
+
+<section class="grid two">
+  <article class="card" data-animate>
+    <div class="card-header">
+      <h3>회상 요법 라이브러리</h3>
+      <span class="chip">이미지</span>
+    </div>
+    <div class="library">
+      {% for item in therapy_library %}
+      <div class="library-item">
+        <div class="library-thumb">{{ item.tag }}</div>
+        <div>
+          <strong>{{ item.title }}</strong>
+          <p>{{ item.meta }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <form class="upload-form">
+      <label>
+        <span>사진 업로드</span>
+        <input type="file" disabled>
+      </label>
+      <button class="ghost" type="button">업로드 대기</button>
+    </form>
+  </article>
+
+  <article class="card" data-animate>
+    <div class="card-header">
+      <h3>퀘스트 생성기</h3>
+      <span class="chip">미션 배포</span>
+    </div>
+    <form class="quest-form" onsubmit="return false;">
+      <label>
+        <span>퀘스트 제목</span>
+        <input id="mission-title" type="text" value="거실 5분 걷기">
+      </label>
+      <label>
+        <span>퀘스트 설명</span>
+        <textarea id="mission-body" rows="3">집 안을 천천히 걸으며 안전 센서가 잘 작동하는지 확인합니다.</textarea>
+      </label>
+      <label>
+        <span>연동 장치</span>
+        <select id="mission-device">
+          <option value="">장치 선택</option>
+          {% for device in devices %}
+          <option value="{{ device.id }}">{{ device.serial }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button class="primary" id="mission-deploy" type="button">오늘의 미션 배포</button>
+      <p id="mission-status"></p>
+    </form>
+    <div class="suggestions">
+      <p>추천 퀘스트</p>
+      <ul>
+        {% for quest in quest_suggestions %}
+        <li>{{ quest }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </article>
+</section>
+
+<section class="card" data-animate>
+  <div class="card-header">
+    <h3>보상 배지 모음</h3>
+    <span class="chip">일일 목표</span>
+  </div>
+  <div class="badge-grid">
+    {% for badge in badges %}
+    <div class="badge">
+      <span>{{ badge.icon }}</span>
+      <div>
+        <strong>{{ badge.title }}</strong>
+        <p>{{ badge.criteria }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
+
+{% block script_extra %}
+<script>
+  const deployButton = document.getElementById('mission-deploy');
+  const titleInput = document.getElementById('mission-title');
+  const bodyInput = document.getElementById('mission-body');
+  const deviceSelect = document.getElementById('mission-device');
+  const statusEl = document.getElementById('mission-status');
+
+  if (deployButton) {
+    deployButton.addEventListener('click', async () => {
+      const title = (titleInput?.value || '').trim();
+      const detail = (bodyInput?.value || '').trim();
+      const message = detail ? `${title}. ${detail}` : title;
+      const deviceId = deviceSelect?.value || '';
+
+      if (!title || !deviceId) {
+        statusEl.textContent = '장치와 제목을 모두 입력하세요.';
+        return;
+      }
+
+      statusEl.textContent = '전송 중...';
+      try {
+        const response = await fetch('/api/tts/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ device_id: deviceId, message }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          statusEl.textContent = 'TTS 전송 완료.';
+        } else {
+          statusEl.textContent = data.detail || '전송 실패.';
+        }
+      } catch (err) {
+        statusEl.textContent = '네트워크 오류.';
+      }
+    });
+  }
+</script>
+{% endblock %}

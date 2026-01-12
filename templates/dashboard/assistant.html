@@ -1,0 +1,83 @@
+{% extends 'dashboard/base.html' %}
+
+{% block head_extra %}
+<style>
+  .assistant-shell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 48px 16px;
+  }
+  .assistant-orb {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: linear-gradient(140deg, #ffd6a5, #fdffb6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: #3a2d1f;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  }
+  .assistant-state {
+    font-size: 20px;
+    font-weight: 600;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>Assistant</h2>
+    <p>Home companion status.</p>
+  </div>
+</section>
+
+<div class="assistant-shell">
+  <div class="assistant-orb" id="assistant-orb">BOGI</div>
+  <div class="assistant-state" id="assistant-state">Idle</div>
+  <p id="assistant-message">Waiting for audio or vision updates.</p>
+</div>
+{% endblock %}
+
+{% block script_extra %}
+<script>
+  const orb = document.getElementById('assistant-orb');
+  const state = document.getElementById('assistant-state');
+  const message = document.getElementById('assistant-message');
+
+  async function refreshAssistant() {
+    try {
+      const response = await fetch('/api/monitor/summary/');
+      if (!response.ok) {
+        return;
+      }
+      const data = await response.json();
+      if (data.alert && data.alert.level === 'CRITICAL') {
+        state.textContent = 'Emergency';
+        orb.style.background = 'linear-gradient(140deg, #ff8fab, #ff4d4d)';
+        message.textContent = `Alert: ${data.alert.reason}`;
+        return;
+      }
+      if (data.status && data.status.safety_state === 'fall') {
+        state.textContent = 'Fall detected';
+        orb.style.background = 'linear-gradient(140deg, #ffd6a5, #ffadad)';
+        message.textContent = 'Help is on the way.';
+        return;
+      }
+      state.textContent = 'Idle';
+      orb.style.background = 'linear-gradient(140deg, #ffd6a5, #fdffb6)';
+      message.textContent = 'Monitoring...';
+    } catch (err) {
+      // ignore transient errors
+    }
+  }
+
+  refreshAssistant();
+  setInterval(refreshAssistant, 3000);
+</script>
+{% endblock %}

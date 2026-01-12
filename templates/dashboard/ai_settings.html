@@ -1,0 +1,49 @@
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+  <section class="page-header">
+    <div>
+      <h2>AI Settings</h2>
+      <p>Update persona prompt and Gemini API key.</p>
+    </div>
+  </section>
+
+  <div class="grid two">
+    <section class="card">
+      <div class="card-header">
+        <h3>Configuration</h3>
+        <span class="chip">LLM</span>
+      </div>
+
+      {% if success %}
+        <div class="chip safe">{{ success }}</div>
+      {% endif %}
+
+      <form method="post" class="quest-form">
+        {% csrf_token %}
+        <label>
+          Persona Prompt
+          <textarea name="persona_prompt" rows="6" placeholder="Describe the assistant tone.">{{ persona_prompt }}</textarea>
+        </label>
+        <label>
+          Gemini API Key
+          <input type="password" name="gemini_api_key" placeholder="{% if has_api_key %}Saved{% else %}Paste API key{% endif %}">
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" name="clear_api_key" value="1">
+          <span>Clear saved API key</span>
+        </label>
+        <button type="submit" class="primary">Save</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h3>Notes</h3>
+        <span class="chip">Info</span>
+      </div>
+      <p>Persona prompt overrides the default prompt used for AI replies.</p>
+      <p>Leaving the API key empty keeps the current one unless you clear it.</p>
+    </section>
+  </div>
+{% endblock %}

@@ -6,12 +6,13 @@ from typing import Any, Dict, List
 
 import os
 
+from django.core.cache import cache
 from django.db import transaction
 from django.db.models import OuterRef, Subquery
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 
-from .models import Alert, Device, Elderly, Owner, Quest
+from .models import AiSetting, Alert, Device, Elderly, EnvironmentGuideLog, Owner, Quest
 
 AREAS = ["노송동", "완산동", "덕진동", "효자동", "인후동"]
 
@@ -239,6 +240,8 @@ def quest_center(request):
         {"title": "걷기 챔피언", "criteria": "걷기 미션 연속 7일", "icon": "🚶"},
         {"title": "안전 지킴이", "criteria": "위험 알림 빠른 응답", "icon": "🛡️"},
     ]
+    devices = Device.objects.select_related("elderly").filter(is_active=True)
+
     return render(
         request,
         "dashboard/quest_center.html",
@@ -248,6 +251,7 @@ def quest_center(request):
             "therapy_library": therapy_library,
             "quest_suggestions": quest_suggestions,
             "badges": badges,
+            "devices": devices,
         },
     )
 
@@ -309,6 +313,8 @@ def environment_guide(request):
             "temperature": avg_temp,
         }
 
+
+    devices = Device.objects.select_related("elderly").filter(is_active=True)
     broadcast = {
         "current_message": "창문을 열고 시원한 바람을 느껴보세요.",
         "households": len(risk_households),
@@ -324,6 +330,16 @@ def environment_guide(request):
         ],
     }
 
+    guide_logs = [
+        {
+            "time": log.created_at.strftime("%H:%M"),
+            "temperature": log.temperature,
+            "message": log.message,
+            "confirmed": log.acknowledged,
+        }
+        for log in EnvironmentGuideLog.objects.select_related("device").all()[:5]
+    ]
+
     return render(
         request,
         "dashboard/environment.html",
@@ -333,6 +349,8 @@ def environment_guide(request):
             "weather_summary": weather_summary,
             "risk_households": risk_households,
             "broadcast": broadcast,
+            "guide_logs": guide_logs,
+            "devices": devices,
         },
     )
 
@@ -511,3 +529,65 @@ def device_vision(request, device_id: int):
             "ws_base": ws_base,
         },
     )
+
+
+def monitor_dashboard(request):
+    return render(
+        request,
+        "dashboard/monitor.html",
+        {
+            "title": "Monitor",
+            "page_name": "monitor",
+        },
+    )
+
+
+def assistant_ui(request):
+    return render(
+        request,
+        "dashboard/assistant.html",
+        {
+            "title": "Assistant",
+            "page_name": "assistant",
+        },
+    )
+
+
+def ai_settings(request):
+    current = AiSetting.objects.order_by("-updated_at").first()
+    context = {
+        "title": "AI Settings",
+        "page_name": "ai_settings",
+        "persona_prompt": current.persona_prompt if current else "",
+        "has_api_key": bool(current and current.gemini_api_key),
+    }
+
+    if request.method == "POST":
+        persona_prompt = (request.POST.get("persona_prompt") or "").strip()
+        api_key = (request.POST.get("gemini_api_key") or "").strip()
+        clear_api_key = request.POST.get("clear_api_key") == "1"
+
+        if current and not persona_prompt:
+            persona_prompt = current.persona_prompt or ""
+
+        if clear_api_key:
+            api_key = ""
+        elif current and not api_key:
+            api_key = current.gemini_api_key or ""
+
+        if current:
+            current.persona_prompt = persona_prompt
+            current.gemini_api_key = api_key
+            current.save(update_fields=["persona_prompt", "gemini_api_key", "updated_at"])
+        else:
+            AiSetting.objects.create(
+                persona_prompt=persona_prompt,
+                gemini_api_key=api_key,
+            )
+
+        cache.delete("ai_settings_cache")
+        context["success"] = "Saved."
+        context["persona_prompt"] = persona_prompt
+        context["has_api_key"] = bool(api_key)
+
+    return render(request, "dashboard/ai_settings.html", context)

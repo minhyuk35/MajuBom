@@ -1,0 +1,258 @@
+{% extends 'dashboard/base.html' %}
+
+{% block head_extra %}
+<style>
+  .alert-critical {
+    border: 2px solid #ff5a5a;
+    box-shadow: 0 0 18px rgba(255, 90, 90, 0.4);
+    animation: alarm-pulse 1s infinite;
+  }
+  @keyframes alarm-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.01); }
+    100% { transform: scale(1); }
+  }
+  .monitor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .list-compact {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .list-compact li {
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: #4a4a4a;
+  }
+  #trend-convo,
+  #trend-emotion {
+    width: 100%;
+    height: 200px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>Monitor</h2>
+    <p>Realtime safety overview.</p>
+  </div>
+</section>
+
+<div class="monitor-grid">
+  <section class="card" id="alert-card">
+    <div class="card-header">
+      <h3>Latest Alert</h3>
+      <span class="chip" id="alert-level">None</span>
+    </div>
+    <p>Reason: <strong id="alert-reason">-</strong></p>
+    <p>Elderly: <strong id="alert-elderly">-</strong></p>
+    <p>Time: <strong id="alert-time">-</strong></p>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <h3>Latest Conversation</h3>
+      <span class="chip">STT</span>
+    </div>
+    <p><strong id="conversation-elderly">-</strong></p>
+    <p id="conversation-text">Waiting for transcript...</p>
+    <p id="conversation-response"></p>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <h3>Current Status</h3>
+      <span class="chip">Mood</span>
+    </div>
+    <p>State: <strong id="status-state">normal</strong></p>
+    <p>Score: <strong id="status-score">0.0</strong></p>
+    <p>Updated: <strong id="status-time">-</strong></p>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <h3>Devices</h3>
+      <span class="chip">Connectivity</span>
+    </div>
+    <p>Offline: <strong id="offline-count">0</strong></p>
+    <ul class="list-compact" id="offline-list"></ul>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <h3>Baseline</h3>
+      <span class="chip">Control</span>
+    </div>
+    <p>Selected Elderly: <strong id="baseline-elderly">-</strong></p>
+    <button class="primary" id="baseline-reset">Reset Baseline</button>
+    <p id="baseline-result"></p>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <h3>Conversation Trend (7d)</h3>
+      <span class="chip">Trend</span>
+    </div>
+    <canvas id="trend-convo"></canvas>
+  </section>
+
+  <section class="card">
+    <div class="card-header">
+      <h3>Emotion Alerts (7d)</h3>
+      <span class="chip">Trend</span>
+    </div>
+    <canvas id="trend-emotion"></canvas>
+  </section>
+</div>
+{% endblock %}
+
+{% block script_extra %}
+<script>
+  const alertCard = document.getElementById('alert-card');
+  const alertLevel = document.getElementById('alert-level');
+  const alertReason = document.getElementById('alert-reason');
+  const alertElderly = document.getElementById('alert-elderly');
+  const alertTime = document.getElementById('alert-time');
+  const convoElderly = document.getElementById('conversation-elderly');
+  const convoText = document.getElementById('conversation-text');
+  const convoResponse = document.getElementById('conversation-response');
+  const statusState = document.getElementById('status-state');
+  const statusScore = document.getElementById('status-score');
+  const statusTime = document.getElementById('status-time');
+  const offlineCount = document.getElementById('offline-count');
+  const offlineList = document.getElementById('offline-list');
+  const baselineElderly = document.getElementById('baseline-elderly');
+  const baselineReset = document.getElementById('baseline-reset');
+  const baselineResult = document.getElementById('baseline-result');
+
+  let currentElderlyId = null;
+
+  async function refreshMonitor() {
+    try {
+      const response = await fetch('/api/monitor/summary/');
+      if (!response.ok) {
+        return;
+      }
+      const data = await response.json();
+      if (data.alert) {
+        alertLevel.textContent = data.alert.level;
+        alertReason.textContent = data.alert.reason;
+        alertElderly.textContent = data.alert.elderly;
+        alertTime.textContent = data.alert.created_at;
+        if (data.alert.level === 'CRITICAL') {
+          alertCard.classList.add('alert-critical');
+        } else {
+          alertCard.classList.remove('alert-critical');
+        }
+      }
+      if (data.conversation) {
+        convoElderly.textContent = data.conversation.elderly;
+        convoText.textContent = data.conversation.transcript || '-';
+        convoResponse.textContent = data.conversation.response || '';
+      }
+      if (data.status) {
+        statusState.textContent = data.status.safety_state || 'normal';
+        statusScore.textContent = data.status.mood_score ?? 0.0;
+        statusTime.textContent = data.status.updated_at;
+        currentElderlyId = data.status.elderly_id || currentElderlyId;
+        baselineElderly.textContent = data.status.elderly || baselineElderly.textContent;
+      }
+      if (data.alert && !currentElderlyId) {
+        currentElderlyId = data.alert.elderly_id || null;
+        baselineElderly.textContent = data.alert.elderly || baselineElderly.textContent;
+      }
+      if (data.conversation && !currentElderlyId) {
+        currentElderlyId = data.conversation.elderly_id || null;
+        baselineElderly.textContent = data.conversation.elderly || baselineElderly.textContent;
+      }
+      if (Array.isArray(data.offline_devices)) {
+        offlineCount.textContent = data.offline_devices.length;
+        offlineList.innerHTML = data.offline_devices
+          .map((device) => `<li>${device.serial} (${device.last_seen_at || 'never'})</li>`)
+          .join('');
+      }
+    } catch (err) {
+      // ignore transient errors
+    }
+  }
+
+  async function resetBaseline() {
+    if (!currentElderlyId) {
+      baselineResult.textContent = 'No elderly selected.';
+      return;
+    }
+    baselineResult.textContent = 'Resetting...';
+    try {
+      const response = await fetch('/api/baseline/reset/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ elderly_id: currentElderlyId }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        baselineResult.textContent = `Baseline reset for ${data.elderly_id}`;
+      } else {
+        baselineResult.textContent = data.detail || 'Reset failed.';
+      }
+    } catch (err) {
+      baselineResult.textContent = 'Reset failed.';
+    }
+  }
+
+  baselineReset.addEventListener('click', resetBaseline);
+
+  async function loadTrends() {
+    try {
+      const response = await fetch('/api/monitor/trends/');
+      if (!response.ok) {
+        return;
+      }
+      const data = await response.json();
+      if (data.conversation && data.conversation.short) {
+        const ctx = document.getElementById('trend-convo');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.conversation.short.labels,
+            datasets: [{
+              label: 'Conversations',
+              data: data.conversation.short.values,
+              borderColor: '#ff9f1c',
+              backgroundColor: 'rgba(255, 159, 28, 0.2)',
+              tension: 0.3,
+              fill: true,
+            }],
+          },
+          options: { responsive: true, maintainAspectRatio: false },
+        });
+      }
+      if (data.emotion && data.emotion.short) {
+        const ctx = document.getElementById('trend-emotion');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: data.emotion.short.labels,
+            datasets: [{
+              label: 'Emotion alerts',
+              data: data.emotion.short.values,
+              backgroundColor: 'rgba(255, 90, 90, 0.6)',
+            }],
+          },
+          options: { responsive: true, maintainAspectRatio: false },
+        });
+      }
+    } catch (err) {
+      // ignore
+    }
+  }
+
+  refreshMonitor();
+  loadTrends();
+  setInterval(refreshMonitor, 3000);
+</script>
+{% endblock %}

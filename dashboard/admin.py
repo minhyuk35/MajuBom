@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Alert, Device, DeviceToken, Elderly, HealthLog, Owner, Quest
+from .models import AiSetting, Alert, Device, DeviceToken, Elderly, HealthLog, Owner, Quest
 
 
 @admin.register(Elderly)
@@ -44,3 +44,8 @@ class DeviceAdmin(admin.ModelAdmin):
 class DeviceTokenAdmin(admin.ModelAdmin):
     list_display = ("device", "revoked", "created_at")
     list_filter = ("revoked",)
+
+
+@admin.register(AiSetting)
+class AiSettingAdmin(admin.ModelAdmin):
+    list_display = ("id", "updated_at")

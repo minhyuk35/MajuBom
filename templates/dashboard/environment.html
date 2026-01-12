@@ -1,74 +1,75 @@
-{% extends 'dashboard/base.html' %}
-
-{% block content %}
-<section class="page-header">
-  <div>
-    <h2>환경 가이드 (Environment)</h2>
-    <p>실시간 온습도와 위험 가구를 기반으로 행동 지침을 제공합니다.</p>
-  </div>
-  <button class="ghost">온습도 새로고침</button>
-</section>
-
-<section class="grid two">
-  <article class="card" data-animate>
-    <div class="card-header">
-      <h3>폭염/한파 특보</h3>
-      <span class="chip danger">경보</span>
-    </div>
-    <div class="weather-banner">
-      <div>
-        <strong>{{ weather_summary.title }}</strong>
-        <p>{{ weather_summary.detail }}</p>
-      </div>
-      <div class="temp">{{ weather_summary.temperature }}°C</div>
-    </div>
-    <ul class="risk-list">
-      {% for home in risk_households %}
-      <li>
-        <div>
-          <strong>{{ home.area }}</strong>
-          <p>{{ home.address }}</p>
-        </div>
-        <span class="chip {{ home.risk_class }}">{{ home.risk_label }}</span>
-      </li>
-      {% endfor %}
-    </ul>
-  </article>
-
-  <article class="card" data-animate>
-    <div class="card-header">
-      <h3>행동 가이드 송출</h3>
-      <span class="chip">음성 안내</span>
-    </div>
-    <div class="broadcast">
-      <div class="broadcast-preview">
-        <p>{{ broadcast.current_message }}</p>
-        <span>송출 가구: {{ broadcast.households }}곳</span>
-      </div>
-      <form class="broadcast-form">
-        <label>
-          <span>가이드 메시지</span>
-          <textarea rows="3">창문을 열고 시원한 바람을 느껴보세요. 물을 한 컵 드세요.</textarea>
-        </label>
-        <label>
-          <span>송출 대상</span>
-          <select>
-            <option>위험 가구 전체</option>
-            <option>노송동</option>
-            <option>완산동</option>
-          </select>
-        </label>
-        <button class="primary" type="button">지금 송출</button>
-      </form>
-    </div>
-    <div class="guide-list">
-      {% for guide in broadcast.guides %}
-      <div>
-        <strong>{{ guide.title }}</strong>
-        <p>{{ guide.detail }}</p>
-      </div>
-      {% endfor %}
-    </div>
-  </article>
-</section>
-{% endblock %}
+{% extends 'dashboard/base.html' %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>환경 가이드 (Environment)</h2>
+    <p>실시간 온습도와 위험 가구를 기반으로 행동 지침을 제공합니다.</p>
+  </div>
+  <button class="ghost" type="button">온습도 새로고침</button>
+</section>
+
+<section class="grid two">
+  <article class="card" data-animate>
+    <div class="card-header">
+      <h3>폭염/한파 특보</h3>
+      <span class="chip danger">경보</span>
+    </div>
+    <div class="weather-banner">
+      <div>
+        <strong>{{ weather_summary.title }}</strong>
+        <p>{{ weather_summary.detail }}</p>
+      </div>
+      <div class="temp">{{ weather_summary.temperature }}°C</div>
+    </div>
+    <ul class="risk-list">
+      {% for home in risk_households %}
+      <li>
+        <div>
+          <strong>{{ home.area }}</strong>
+          <p>{{ home.address }}</p>
+        </div>
+        <span class="chip {{ home.risk_class }}">{{ home.risk_label }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </article>
+
+  <article class="card" data-animate>
+    <div class="card-header">
+      <h3>AI 자동 케어</h3>
+      <span class="chip">실시간 감시</span>
+    </div>
+    <div class="ai-status">
+      <span class="status-dot"></span>
+      <div>
+        <strong>AI 복이</strong>
+        <p>환경 상태를 감시하며 자동으로 안내합니다.</p>
+      </div>
+    </div>
+    <div class="guide-log">
+      <div class="guide-log-header">
+        <h4>최근 가이드 로그</h4>
+        <span>최근 5건</span>
+      </div>
+      <ul>
+        {% for log in guide_logs %}
+        <li>
+          <div class="log-meta">
+            <strong>{{ log.time }}</strong>
+            <span>{{ log.temperature }}°C</span>
+          </div>
+          <p>{{ log.message }}</p>
+          <span class="log-status {% if log.confirmed %}confirmed{% else %}pending{% endif %}">
+            <span class="status-icon"></span>
+            {% if log.confirmed %}확인{% else %}대기{% endif %}
+          </span>
+        </li>
+        {% empty %}
+        <li class="empty">최근 안내가 없습니다.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </article>
+</section>
+{% endblock %}

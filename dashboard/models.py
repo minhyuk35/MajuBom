@@ -136,3 +136,83 @@ class EnvironmentReading(models.Model):
     humidity = models.FloatField()
     source = models.CharField(max_length=64, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class EnvironmentGuideLog(models.Model):
+    device = models.ForeignKey(
+        Device,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="environment_guides",
+    )
+    temperature = models.FloatField()
+    message = models.TextField()
+    reason = models.CharField(max_length=32, blank=True)
+    acknowledged = models.BooleanField(default=False)
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+class ElderlyStatus(models.Model):
+    elderly = models.OneToOneField(Elderly, on_delete=models.CASCADE, related_name="status")
+    baseline_pose = models.JSONField(default=dict, blank=True)
+    baseline_face = models.JSONField(default=dict, blank=True)
+    mood_score = models.FloatField(default=0.0)
+    safety_state = models.CharField(max_length=32, default="normal")
+    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"{self.elderly.name} status"
+
+
+class Conversation(models.Model):
+    elderly = models.ForeignKey(Elderly, on_delete=models.CASCADE, related_name="conversations")
+    transcript = models.TextField(blank=True)
+    response = models.TextField(blank=True)
+    emotion = models.CharField(max_length=64, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"{self.elderly.name} {self.created_at:%Y-%m-%d %H:%M}"
+
+
+class EmergencyAlert(models.Model):
+    LEVEL_CRITICAL = "CRITICAL"
+    LEVEL_WARNING = "WARNING"
+    LEVEL_INFO = "INFO"
+    LEVEL_CHOICES = [
+        (LEVEL_CRITICAL, "Critical"),
+        (LEVEL_WARNING, "Warning"),
+        (LEVEL_INFO, "Info"),
+    ]
+
+    elderly = models.ForeignKey(
+        Elderly,
+        on_delete=models.CASCADE,
+        related_name="emergency_alerts",
+    )
+    level = models.CharField(max_length=16, choices=LEVEL_CHOICES)
+    reason = models.CharField(max_length=200)
+    payload = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.elderly.name} {self.level} {self.reason}"
+
+
+class AiSetting(models.Model):
+    persona_prompt = models.TextField(blank=True)
+    gemini_api_key = models.CharField(max_length=256, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self) -> str:
+        return f"AI Setting {self.id}"
